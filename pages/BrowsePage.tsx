@@ -1,0 +1,138 @@
+
+import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { GAMES } from '../constants';
+import { Game } from '../types';
+import MainHeader from '../components/MainHeader';
+
+const GameCard: React.FC<{ game: Game }> = ({ game }) => {
+  const [isLiked, setIsLiked] = useState(false);
+
+  const toggleLike = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsLiked(!isLiked);
+  };
+  
+  return (
+    <Link to={`/game/${game.id}`} className="group flex flex-col gap-3 rounded-xl overflow-hidden bg-white dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800 transition-all duration-300 hover:shadow-lg hover:dark:shadow-primary/20 hover:-translate-y-1">
+      <div className="relative w-full aspect-video">
+        <div className="w-full h-full bg-center bg-no-repeat bg-cover" style={{ backgroundImage: `url("${game.coverImage}")` }}></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+          <div className="flex w-full items-center justify-between gap-2">
+            <button className="flex-1 flex min-w-0 cursor-pointer items-center justify-center overflow-hidden rounded-md h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors">
+              <span className="truncate">View Details</span>
+            </button>
+            <button title="Play Demo" className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-md bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors">
+              <span className="material-symbols-outlined text-2xl">play_circle</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div className="px-4 pb-4">
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-zinc-900 dark:text-white text-base font-bold leading-normal">{game.title}</p>
+            <p className="text-zinc-500 dark:text-zinc-400 text-sm font-normal leading-normal">by {game.developer}</p>
+          </div>
+          <button onClick={toggleLike} className={`transition-colors ${isLiked ? 'text-red-500' : 'text-zinc-400 dark:text-zinc-500 hover:text-red-500'}`} title={isLiked ? "Unlike game" : "Like game"}>
+            <span className="material-symbols-outlined">{isLiked ? 'favorite' : 'favorite_border'}</span>
+          </button>
+        </div>
+        <p className="text-zinc-600 dark:text-zinc-300 text-sm font-normal leading-normal mt-2 truncate">{game.description}</p>
+        <div className="flex items-center gap-1 mt-3 text-amber-400">
+            {[...Array(Math.floor(game.rating))].map((_, i) => <span key={i} className="material-symbols-outlined text-base">star</span>)}
+            {game.rating % 1 !== 0 && <span className="material-symbols-outlined text-base">star_half</span>}
+            <span className="text-zinc-500 dark:text-zinc-400 text-xs ml-1 font-medium">({game.rating})</span>
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+
+const BrowsePage: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const gamesPerPage = 6;
+
+  const filteredGames = useMemo(() => {
+    return GAMES.filter(game => 
+      game.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery]);
+
+  const totalPages = Math.ceil(filteredGames.length / gamesPerPage);
+  const currentGames = filteredGames.slice((currentPage - 1) * gamesPerPage, currentPage * gamesPerPage);
+  
+  const handlePageChange = (page: number) => {
+      if (page >= 1 && page <= totalPages) {
+          setCurrentPage(page);
+      }
+  }
+
+  return (
+    <div className="relative flex min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+      <div className="layout-container flex h-full grow flex-col">
+        <MainHeader isBrowsePage={true}/>
+        <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-7xl flex-col gap-8">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-col gap-2">
+                <h1 className="text-zinc-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Discover Games</h1>
+                <p className="text-zinc-600 dark:text-zinc-400 text-base font-normal leading-normal">Explore a vast library of games, curated just for you.</p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-4 md:flex-row md:items-center">
+              <div className="flex-1">
+                <label className="flex flex-col h-12 w-full">
+                  <div className="flex w-full flex-1 items-stretch rounded-lg h-full">
+                    <div className="text-zinc-500 dark:text-zinc-400 flex border-r-0 bg-white dark:bg-zinc-800 items-center justify-center pl-4 rounded-l-lg border border-zinc-300 dark:border-zinc-700">
+                      <span className="material-symbols-outlined">search</span>
+                    </div>
+                    <input 
+                      className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-zinc-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background-light dark:focus:ring-offset-background-dark bg-white dark:bg-zinc-800 h-full placeholder:text-zinc-500 dark:placeholder:text-zinc-400 px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal border border-zinc-300 dark:border-zinc-700" 
+                      placeholder="Search by game name..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                </label>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <button className="flex h-12 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-zinc-800 px-4 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
+                  <p className="text-zinc-900 dark:text-white text-sm font-medium leading-normal">Genre: All</p>
+                  <span className="material-symbols-outlined text-zinc-500 dark:text-zinc-400">expand_more</span>
+                </button>
+                <button className="flex h-12 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-zinc-800 px-4 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
+                  <p className="text-zinc-900 dark:text-white text-sm font-medium leading-normal">Sort By: Popularity</p>
+                  <span className="material-symbols-outlined text-zinc-500 dark:text-zinc-400">expand_more</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6">
+                {currentGames.map(game => <GameCard key={game.id} game={game} />)}
+            </div>
+            
+             <div className="flex items-center justify-center gap-2 pt-8">
+                <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="flex size-10 items-center justify-center rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span className="material-symbols-outlined">chevron_left</span>
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button key={page} onClick={() => handlePageChange(page)} className={`flex size-10 items-center justify-center rounded-lg text-sm font-bold ${currentPage === page ? 'bg-primary text-white' : 'border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors'}`}>
+                        {page}
+                    </button>
+                ))}
+                <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="flex size-10 items-center justify-center rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span className="material-symbols-outlined">chevron_right</span>
+                </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default BrowsePage;
